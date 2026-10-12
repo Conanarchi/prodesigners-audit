@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Your Quotation · ProDesigners</title>
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Schibsted+Grotesk:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .qwrap { max-width: 640px; margin: 0 auto; padding-block: 28px 80px; }
+  .qcard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 22px; }
+  .qhead { padding: 22px; border-bottom: 1px solid var(--line); }
+  .qhead .eyebrow { margin-bottom: 8px; }
+  .qprice { font: 800 clamp(36px, 9vw, 52px)/1 var(--f-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 8px; }
+  .qbody { padding: 22px; display: grid; gap: 18px; }
+  .qbody h3 { font: 500 12px/1.4 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .qmeta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .qmeta div { background: var(--bg); border-radius: 6px; padding: 12px; }
+  .qmeta b { display: block; font-size: 17px; }
+  .qmeta span { font-size: 13px; color: var(--muted); }
+  .qact { display: grid; gap: 10px; padding: 0 22px 22px; }
+  .qact .btn { width: 100%; }
+  .accepted { background: color-mix(in srgb, var(--wa) 12%, var(--surface)); border: 1px solid var(--wa); color: var(--ink); border-radius: 6px; padding: 14px; font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <a href="/" class="brand"><img src="/assets/logo.png" class="logo logo-light" alt="ProDesigners" height="28"><img src="/assets/logo-dark.png" class="logo logo-dark" alt="" height="28"></a>
+</div></header>
+<main class="wrap qwrap" id="q">
+  <p class="sub" id="loading">Loading your quotation…</p>
+</main>
+<script>
+(function () {
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var parts = location.pathname.split('/').filter(Boolean); // q / ref / token
+  var ref = parts[1] || '';
+  var t = parts[2] || new URLSearchParams(location.search).get('t') || '';
+  var box = document.getElementById('q');
+  function money(a, c) { return c + ' ' + Number(a).toLocaleString('en-US'); }
+  function render(d) {
+    var q = d.quote, c = d.company || {};
+    var wa = c.whatsapp ? 'https://wa.me/' + c.whatsapp.replace(/\D/g, '') + '?text=' + encodeURIComponent('Hello ProDesigners, about my quotation ' + d.ref) : '';
+    var scope = (q.scope || '').split(/\n|\|/).map(function (x) { return x.trim(); }).filter(Boolean);
+    box.innerHTML =
+      '<p class="eyebrow">Pre-Construction Audit quotation</p>' +
+      '<h1 style="font-size:clamp(26px,6vw,36px)">Hello ' + esc((d.client.name || '').split(' ')[0]) + ', here is your quotation.</h1>' +
+      '<div class="qcard"><div class="qhead"><p class="eyebrow">' + esc(d.ref) + ' · ' + esc(d.project.name) + '</p>' +
+      '<div class="qprice">' + esc(money(q.amount, q.currency)) + '</div><p class="sub" style="margin-top:6px">' + esc(q.vatNote || 'Fixed fee for this project') + '</p></div>' +
+      '<div class="qbody">' +
+        '<div class="qmeta"><div><b>' + esc(q.deliveryDays) + ' working days</b><span>after confirmation</span></div><div><b>' + esc(q.validUntil) + '</b><span>quotation valid until</span></div></div>' +
+        '<div><h3>Included</h3><ul class="ticks" style="margin:0">' + scope.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' +
+        (q.terms ? '<div><h3>Terms</h3><p>' + esc(q.terms) + '</p></div>' : '') +
+        (q.message ? '<div><h3>Note from our team</h3><p>' + esc(q.message).replace(/\n/g, '<br>') + '</p></div>' : '') +
+      '</div><div class="qact">' +
+        (q.acceptedAt ? '<div class="accepted">✓ You accepted this quotation. Our team will contact you to start.</div>' : '<button class="btn btn-red" id="accept" type="button">Accept quotation</button>') +
+        (wa ? '<a class="btn btn-wa" href="' + esc(wa) + '" target="_blank" rel="noopener">Ask a question on WhatsApp</a>' : '') +
+        '<p class="sub" style="font-size:14px;text-align:center">Or call ' + esc(c.phone) + ' · ' + esc(c.email) + '</p>' +
+      '</div></div>' +
+      '<p style="margin-top:22px;text-align:center"><a href="' + esc(c.website) + '" target="_blank" rel="noopener">See our projects ↗</a></p>';
+    var b = document.getElementById('accept');
+    if (b) b.onclick = function () {
+      b.disabled = true; b.textContent = 'Confirming…';
+      fetch('/api/quote/' + encodeURIComponent(ref) + '/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: t }) })
+        .then(function (r) { return r.json(); }).then(render).catch(function () { b.disabled = false; b.textContent = 'Accept quotation'; });
+    };
+  }
+  fetch('/api/quote/' + encodeURIComponent(ref) + '?t=' + encodeURIComponent(t))
+    .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); })
+    .then(render)
+    .catch(function (e) { box.innerHTML = '<h1 style="font-size:28px">Quotation not found</h1><p class="sub" style="margin-top:10px">' + esc(e.message || 'Please check the link in your message, or contact us.') + '</p>'; });
+})();
+</script>
+</body>
+</html>

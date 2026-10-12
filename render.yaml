@@ -1,0 +1,32 @@
+# Render Blueprint — creates the upload/quotation server from this GitHub repo.
+# Secret values (marked sync: false) are asked for when you click "Deploy to Render".
+services:
+  - type: web
+    name: prodesigners-audit
+    runtime: node
+    plan: free            # change to "starter" so the server never sleeps
+    region: frankfurt
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NEXTCLOUD_SHARE_URL
+        sync: false
+      - key: NEXTCLOUD_SHARE_PASSWORD
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: COMPANY_WHATSAPP
+        sync: false
+      - key: BREVO_API_KEY      # Render free blocks SMTP — emails go through Brevo's API
+        sync: false
+      - key: MAIL_FROM
+        value: ProDesigners Audit <Contact@prodesigners-qatar.com>
+      - key: TEAM_EMAIL
+        value: Contact@prodesigners-qatar.com
+      - key: PUBLIC_URL
+        value: https://prodesigners-audit.onrender.com
+      - key: ALLOWED_ORIGINS
+        value: https://conanarchi.github.io
+      - key: SESSION_SECRET
+        generateValue: true
