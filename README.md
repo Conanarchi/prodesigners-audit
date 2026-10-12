@@ -48,7 +48,7 @@ This is one small Node.js app that runs three things:
 Your server will be at `https://prodesigners-audit.onrender.com`, and the dashboard at `/admin`.
 If Render gives a different address, update `apiBase` in `public/site-config.js`, and `PUBLIC_URL` in Render.
 
-**2. Website (GitHub Pages, free):** in the repo, go to **Settings → Pages → Source: GitHub Actions**.
+**2. Website (GitHub Pages, free):** published automatically from the `gh-pages` branch (Settings → Pages → Branch: `gh-pages` / root).
 Every push to `main` publishes the site to `https://conanarchi.github.io/prodesigners-audit/`. This is the link to share.
 
 **Limits of the free plan:**
